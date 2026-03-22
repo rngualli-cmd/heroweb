@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Social Post Generator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f0f13;
+      color: #e8e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 16px 80px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p { color: #666; margin-top: 8px; font-size: 0.9rem; }
+
+    .card {
+      background: #1a1a24;
+      border: 1px solid #2a2a38;
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 580px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    textarea, input[type="text"] {
+      width: 100%;
+      background: #0f0f13;
+      border: 1px solid #2a2a38;
+      border-radius: 10px;
+      color: #e8e8f0;
+      font-size: 0.95rem;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: inherit;
+    }
+    textarea { resize: vertical; min-height: 100px; }
+    textarea:focus, input[type="text"]:focus { border-color: #a78bfa; }
+
+    .field { margin-bottom: 20px; }
+
+    .drop-zone {
+      border: 2px dashed #2a2a38;
+      border-radius: 10px;
+      padding: 28px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: #a78bfa;
+      background: rgba(167,139,250,0.04);
+    }
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .drop-zone .icon { font-size: 1.8rem; margin-bottom: 6px; display: block; }
+    .drop-zone .hint { font-size: 0.82rem; color: #555; }
+    .drop-zone .filename { margin-top: 8px; font-size: 0.82rem; color: #a78bfa; }
+
+    #preview-wrap { display: none; margin-top: 10px; position: relative; width: fit-content; }
+    #preview-wrap img { max-height: 100px; border-radius: 8px; display: block; }
+    #remove-img {
+      position: absolute; top: -8px; right: -8px;
+      background: #e53e3e; border: none; color: #fff;
+      border-radius: 50%; width: 20px; height: 20px;
+      font-size: 0.7rem; cursor: pointer; line-height: 20px; text-align: center;
+    }
+
+    .btn-primary {
+      width: 100%; padding: 13px; border: none; border-radius: 10px;
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      color: #fff; font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: opacity 0.2s, transform 0.1s;
+    }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .loader-wrap {
+      display: none; flex-direction: column; align-items: center;
+      gap: 12px; padding: 32px 0 4px;
+    }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid #2a2a38; border-top-color: #a78bfa;
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loader-wrap p { color: #666; font-size: 0.88rem; }
+
+    .error-box {
+      display: none;
+      background: rgba(229,62,62,0.1); border: 1px solid rgba(229,62,62,0.25);
+      border-radius: 10px; padding: 12px 16px; color: #fc8181;
+      font-size: 0.88rem; margin-top: 20px;
+    }
+
+    /* ── Results section ── */
+    .results { display: none; margin-top: 40px; width: 100%; max-width: 580px; }
+
+    .section-title {
+      font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #666; margin-bottom: 12px;
+    }
+
+    /* Caption */
+    .caption-box {
+      background: #1a1a24; border: 1px solid #2a2a38;
+      border-radius: 14px; padding: 22px; margin-bottom: 32px;
+    }
+    .caption-text {
+      font-size: 0.92rem; line-height: 1.7; color: #ccc;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .copy-btn {
+      margin-top: 14px; padding: 7px 16px;
+      background: transparent; border: 1px solid #3a3a50;
+      color: #888; border-radius: 8px; font-size: 0.8rem;
+      cursor: pointer; transition: border-color 0.2s, color 0.2s;
+    }
+    .copy-btn:hover { border-color: #a78bfa; color: #a78bfa; }
+
+    /* ── Edit section ── */
+    .edit-section {
+      background: #1a1a24; border: 1px solid #2a2a38;
+      border-radius: 16px; padding: 24px; margin-bottom: 32px;
+    }
+    .edit-header {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+    }
+    .edit-header h2 { font-size: 1rem; font-weight: 600; color: #e8e8f0; }
+    .badge {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; background: rgba(167,139,250,0.15);
+      color: #a78bfa; padding: 3px 8px; border-radius: 20px;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      display: inline-block;
+      cursor: crosshair;
+      border-radius: 10px;
+      overflow: hidden;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    #edit-canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      user-select: none;
+    }
+
+    .canvas-hint {
+      font-size: 0.78rem; color: #555; margin-bottom: 14px; text-align: center;
+    }
+
+    .selection-info {
+      display: none;
+      font-size: 0.78rem; color: #a78bfa; margin-bottom: 14px;
+      background: rgba(167,139,250,0.08); border: 1px solid rgba(167,139,250,0.2);
+      border-radius: 8px; padding: 8px 12px;
+    }
+
+    .edit-row { display: flex; gap: 10px; align-items: flex-start; }
+    .edit-row input { flex: 1; }
+
+    .btn-edit {
+      padding: 12px 20px; border: none; border-radius: 10px;
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      color: #fff; font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; white-space: nowrap;
+      transition: opacity 0.2s, transform 0.1s; flex-shrink: 0;
+    }
+    .btn-edit:hover { opacity: 0.9; }
+    .btn-edit:active { transform: scale(0.97); }
+    .btn-edit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-clear {
+      padding: 7px 14px; background: transparent;
+      border: 1px solid #3a3a50; color: #666; border-radius: 8px;
+      font-size: 0.78rem; cursor: pointer; margin-top: 10px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-clear:hover { border-color: #555; color: #aaa; }
+
+    .edit-loader {
+      display: none; flex-direction: column; align-items: center;
+      gap: 10px; padding: 20px 0 4px;
+    }
+    .edit-error {
+      display: none;
+      background: rgba(229,62,62,0.1); border: 1px solid rgba(229,62,62,0.25);
+      border-radius: 8px; padding: 10px 14px; color: #fc8181;
+      font-size: 0.85rem; margin-top: 14px;
+    }
+
+    /* History strip */
+    .history-strip {
+      display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px;
+    }
+    .history-thumb {
+      width: 60px; height: 60px; border-radius: 8px;
+      object-fit: cover; cursor: pointer; border: 2px solid transparent;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .history-thumb:hover { border-color: #a78bfa; transform: scale(1.05); }
+    .history-thumb.active { border-color: #60a5fa; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Social Post Generator</h1>
+  <p>Generate a post image, then paint-select any region to edit it.</p>
+</header>
+
+<!-- ── Generate Card ── -->
+<div class="card">
+  <form id="gen-form">
+    <div class="field">
+      <label for="prompt">Your Prompt</label>
+      <textarea id="prompt" name="prompt" placeholder="Describe the post you want to create…"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Reference Image <span style="color:#444;text-transform:none;font-weight:400">(optional)</span></label>
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" id="image-input" name="image" accept="image/*" />
+        <span class="icon">🖼️</span>
+        <div>Drag & drop or <strong>click to browse</strong></div>
+        <div class="hint">PNG · JPG · WEBP · GIF</div>
+        <div class="filename" id="filename"></div>
+      </div>
+      <div id="preview-wrap">
+        <img id="preview-img" src="" alt="Preview" />
+        <button type="button" id="remove-img" title="Remove">✕</button>
+      </div>
+    </div>
+
+    <button type="submit" id="submit-btn" class="btn-primary">Generate Post</button>
+  </form>
+
+  <div class="loader-wrap" id="loader">
+    <div class="spinner"></div>
+    <p>Generating — this may take a few seconds…</p>
+  </div>
+  <div class="error-box" id="error-box"></div>
+</div>
+
+<!-- ── Results ── -->
+<div class="results" id="results">
+
+  <!-- Caption -->
+  <div class="caption-box" id="caption-box" style="display:none">
+    <div class="section-title">Suggested Caption</div>
+    <div class="caption-text" id="caption-text"></div>
+    <button class="copy-btn" id="copy-btn">Copy Caption</button>
+  </div>
+
+  <!-- Edit Section -->
+  <div class="edit-section" id="edit-section">
+    <div class="edit-header">
+      <h2>Edit a Region</h2>
+      <span class="badge">Inpainting</span>
+    </div>
+
+    <div class="canvas-hint">Draw a rectangle on the image to select the area you want to change</div>
+
+    <div class="canvas-wrap" id="canvas-wrap">
+      <canvas id="edit-canvas"></canvas>
+    </div>
+
+    <div class="selection-info" id="selection-info"></div>
+
+    <div class="edit-row">
+      <input type="text" id="edit-prompt" placeholder='Describe what to put there — e.g. "a golden leg"' />
+      <button class="btn-edit" id="edit-btn" disabled>Apply</button>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn-clear" id="clear-selection-btn">Clear Selection</button>
+      <button class="btn-clear" id="undo-btn" style="display:none">↩ Undo</button>
+    </div>
+
+    <div class="edit-loader" id="edit-loader">
+      <div class="spinner"></div>
+      <p>Applying edit…</p>
+    </div>
+    <div class="edit-error" id="edit-error"></div>
+  </div>
+
+  <!-- Version history -->
+  <div id="history-wrap" style="display:none">
+    <div class="section-title">Version History</div>
+    <div class="history-strip" id="history-strip"></div>
+  </div>
+
+</div>
+
+<script>
+  // ── State ──
+  let currentFilename = null;   // filename on server for the active image
+  let currentDataUrl  = null;   // base64 data URL of active image
+  let previousState   = null;   // { filename, dataUrl } for undo
+  let history         = [];     // all versions
+
+  // Selection state
+  let isDrawing  = false;
+  let startX = 0, startY = 0;
+  let selX = 0, selY = 0, selW = 0, selH = 0;
+  let hasSelection = false;
+
+  // Canvas & image
+  const canvas  = document.getElementById('edit-canvas');
+  const ctx     = canvas.getContext('2d');
+  let   canvasImg = new Image();   // the image currently drawn on canvas
+
+  // ── Helpers ──
+  function canvasCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width  / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const src = e.touches ? e.touches[0] : e;
+    return {
+      x: (src.clientX - rect.left)  * scaleX,
+      y: (src.clientY - rect.top)   * scaleY,
+    };
+  }
+
+  function redrawCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(canvasImg, 0, 0);
+
+    if (!hasSelection) return;
+
+    // Dark overlay outside selection
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Cut out the selection (show original)
+    ctx.drawImage(canvasImg, selX, selY, selW, selH, selX, selY, selW, selH);
+
+    // Selection border
+    ctx.strokeStyle = '#a78bfa';
+    ctx.lineWidth   = 2;
+    ctx.setLineDash([6, 3]);
+    ctx.strokeRect(selX, selY, selW, selH);
+    ctx.setLineDash([]);
+
+    // Corner handles
+    const hs = 8;
+    ctx.fillStyle = '#a78bfa';
+    [[selX, selY], [selX+selW, selY], [selX, selY+selH], [selX+selW, selY+selH]].forEach(([cx,cy]) => {
+      ctx.fillRect(cx - hs/2, cy - hs/2, hs, hs);
+    });
+  }
+
+  function loadImageToCanvas(dataUrl) {
+    canvasImg = new Image();
+    canvasImg.onload = () => {
+      canvas.width  = canvasImg.naturalWidth;
+      canvas.height = canvasImg.naturalHeight;
+      clearSelection();
+      redrawCanvas();
+    };
+    canvasImg.src = dataUrl;
+  }
+
+  function clearSelection() {
+    hasSelection = false;
+    selX = selY = selW = selH = 0;
+    document.getElementById('selection-info').style.display = 'none';
+    document.getElementById('edit-btn').disabled = true;
+    redrawCanvas();
+  }
+
+  function updateSelectionInfo() {
+    const info = document.getElementById('selection-info');
+    info.style.display = 'block';
+    info.textContent = `Selection: ${Math.round(selW)} × ${Math.round(selH)} px  at  (${Math.round(selX)}, ${Math.round(selY)})`;
+    document.getElementById('edit-btn').disabled =
+      !hasSelection || document.getElementById('edit-prompt').value.trim() === '';
+  }
+
+  // ── Canvas mouse / touch events ──
+  function onPointerDown(e) {
+    e.preventDefault();
+    const { x, y } = canvasCoords(e);
+    isDrawing = true;
+    startX = x; startY = y;
+    hasSelection = false;
+  }
+
+  function onPointerMove(e) {
+    if (!isDrawing) return;
+    e.preventDefault();
+    const { x, y } = canvasCoords(e);
+    selX = Math.min(x, startX);
+    selY = Math.min(y, startY);
+    selW = Math.abs(x - startX);
+    selH = Math.abs(y - startY);
+    hasSelection = selW > 4 && selH > 4;
+    redrawCanvas();
+  }
+
+  function onPointerUp(e) {
+    if (!isDrawing) return;
+    isDrawing = false;
+    if (hasSelection) updateSelectionInfo();
+    else clearSelection();
+  }
+
+  canvas.addEventListener('mousedown',  onPointerDown);
+  canvas.addEventListener('mousemove',  onPointerMove);
+  canvas.addEventListener('mouseup',    onPointerUp);
+  canvas.addEventListener('touchstart', onPointerDown, { passive: false });
+  canvas.addEventListener('touchmove',  onPointerMove, { passive: false });
+  canvas.addEventListener('touchend',   onPointerUp);
+
+  // Enable apply button as user types
+  document.getElementById('edit-prompt').addEventListener('input', () => {
+    document.getElementById('edit-btn').disabled =
+      !hasSelection || document.getElementById('edit-prompt').value.trim() === '';
+  });
+
+  document.getElementById('clear-selection-btn').addEventListener('click', clearSelection);
+
+  // ── Generate form ──
+  const genForm   = document.getElementById('gen-form');
+  const submitBtn = document.getElementById('submit-btn');
+  const loader    = document.getElementById('loader');
+  const errorBox  = document.getElementById('error-box');
+  const results   = document.getElementById('results');
+  const imageInput = document.getElementById('image-input');
+
+  imageInput.addEventListener('change', () => {
+    const file = imageInput.files[0];
+    if (!file) return;
+    document.getElementById('filename').textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('preview-img').src = e.target.result;
+      document.getElementById('preview-wrap').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('remove-img').addEventListener('click', () => {
+    imageInput.value = '';
+    document.getElementById('filename').textContent = '';
+    document.getElementById('preview-wrap').style.display = 'none';
+  });
+
+  const dz = document.getElementById('drop-zone');
+  dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop',      () => dz.classList.remove('drag-over'));
+
+  genForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const prompt = document.getElementById('prompt').value.trim();
+    const image  = imageInput.files[0];
+    if (!prompt && !image) { showError('Please enter a prompt or upload an image.'); return; }
+
+    setLoading(true);
+    hideError();
+    results.style.display = 'none';
+
+    const fd = new FormData();
+    if (prompt) fd.append('prompt', prompt);
+    if (image)  fd.append('image',  image);
+
+    try {
+      const res  = await fetch('http://localhost:5000/generate', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok || data.error) { showError(data.error || 'Something went wrong.'); return; }
+      applyNewImage(data.image, data.filename, true);
+      if (data.caption) {
+        document.getElementById('caption-text').textContent = data.caption;
+        document.getElementById('caption-box').style.display = 'block';
+      }
+      results.style.display = 'block';
+      results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch {
+      showError('Could not reach the server. Make sure server.py is running on port 5000.');
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  // ── Apply Edit ──
+  document.getElementById('edit-btn').addEventListener('click', async () => {
+    const prompt = document.getElementById('edit-prompt').value.trim();
+    if (!prompt || !hasSelection) return;
+
+    // Save undo state
+    previousState = { filename: currentFilename, dataUrl: currentDataUrl };
+    document.getElementById('undo-btn').style.display = 'inline-block';
+
+    setEditLoading(true);
+    hideEditError();
+
+    try {
+      const res = await fetch('http://localhost:5000/edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: currentFilename,
+          x: Math.round(selX),
+          y: Math.round(selY),
+          w: Math.round(selW),
+          h: Math.round(selH),
+          prompt,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) { showEditError(data.error || 'Edit failed.'); return; }
+      applyNewImage(data.image, data.filename, false);
+      document.getElementById('edit-prompt').value = '';
+      clearSelection();
+    } catch {
+      showEditError('Could not reach the server.');
+    } finally {
+      setEditLoading(false);
+    }
+  });
+
+  // ── Undo ──
+  document.getElementById('undo-btn').addEventListener('click', () => {
+    if (!previousState) return;
+    applyNewImage(previousState.dataUrl, previousState.filename, false);
+    previousState = null;
+    document.getElementById('undo-btn').style.display = 'none';
+  });
+
+  // ── Copy caption ──
+  document.getElementById('copy-btn').addEventListener('click', () => {
+    navigator.clipboard.writeText(document.getElementById('caption-text').textContent).then(() => {
+      document.getElementById('copy-btn').textContent = 'Copied!';
+      setTimeout(() => document.getElementById('copy-btn').textContent = 'Copy Caption', 2000);
+    });
+  });
+
+  // ── Apply new image (generate or edit result) ──
+  function applyNewImage(dataUrl, filename, isFirstGeneration) {
+    currentDataUrl  = dataUrl;
+    currentFilename = filename;
+    loadImageToCanvas(dataUrl);
+    addToHistory(dataUrl, filename);
+    if (!isFirstGeneration) clearSelection();
+  }
+
+  function addToHistory(dataUrl, filename) {
+    history.push({ dataUrl, filename });
+    const strip = document.getElementById('history-strip');
+    const wrap  = document.getElementById('history-wrap');
+    wrap.style.display = 'block';
+
+    // Remove active class from all
+    strip.querySelectorAll('.history-thumb').forEach(t => t.classList.remove('active'));
+
+    const thumb = document.createElement('img');
+    thumb.src = dataUrl;
+    thumb.className = 'history-thumb active';
+    thumb.title = `Version ${history.length}`;
+    thumb.addEventListener('click', () => {
+      strip.querySelectorAll('.history-thumb').forEach(t => t.classList.remove('active'));
+      thumb.classList.add('active');
+      currentDataUrl  = dataUrl;
+      currentFilename = filename;
+      loadImageToCanvas(dataUrl);
+      clearSelection();
+    });
+    strip.appendChild(thumb);
+  }
+
+  // ── Loading helpers ──
+  function setLoading(on) {
+    submitBtn.disabled = on;
+    submitBtn.textContent = on ? 'Generating…' : 'Generate Post';
+    loader.style.display = on ? 'flex' : 'none';
+  }
+  function showError(msg)  { errorBox.textContent = msg; errorBox.style.display = 'block'; }
+  function hideError()     { errorBox.style.display = 'none'; }
+
+  function setEditLoading(on) {
+    document.getElementById('edit-btn').disabled = on;
+    document.getElementById('edit-btn').textContent = on ? 'Applying…' : 'Apply';
+    document.getElementById('edit-loader').style.display = on ? 'flex' : 'none';
+  }
+  function showEditError(msg) {
+    const el = document.getElementById('edit-error');
+    el.textContent = msg; el.style.display = 'block';
+  }
+  function hideEditError() { document.getElementById('edit-error').style.display = 'none'; }
+</script>
+</body>
+</html>

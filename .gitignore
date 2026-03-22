@@ -1,0 +1,32 @@
+# Environment variables (API keys)
+.env
+
+# Python virtual environment
+googleengine/Lib/
+googleengine/Scripts/
+googleengine/Include/
+googleengine/pyvenv.cfg
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Generated output
+googleengine/generated_images/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Claude settings
+.claude/

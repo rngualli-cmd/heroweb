@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Gen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="Style2.css">
+</head>
+<body class="light-mode text-normal">
+
+    <button id="menu-toggle" class="icon-btn hamburger" aria-label="Open Menu">&#9776;</button>
+    <div class="download-menu">
+            <button id="download-btn" class="circle-btn">&#x2B07;</button>
+            <ul class="download-options">
+                <li id="download-raw">Download Image</li>
+                <li id="download-template">Download with Template</li>
+            </ul>
+    </div>
+    <!-- Character Library Panel (Left) -->
+    <aside id="char-panel" class="char-panel">
+        <div class="char-panel-header">
+            <span class="char-panel-title">Character Library</span>
+            <button id="close-char-panel" class="icon-btn" style="font-size:20px;">&times;</button>
+        </div>
+        <div class="char-panel-body">
+            <p class="char-panel-hint">Click a character to load an example prompt into the input box.</p>
+            <div class="char-list" id="char-list"></div>
+
+            <div class="char-divider"></div>
+
+            <button id="custom-template-btn" class="char-template-btn">&#43; Custom Template</button>
+
+            <div id="custom-form" class="custom-form" style="display:none;">
+                <div class="cf-field">
+                    <label class="cf-label">Name</label>
+                    <input type="text" id="cf-name" class="cf-input" placeholder="Hero name…" />
+                </div>
+                <div class="cf-field">
+                    <label class="cf-label">Type</label>
+                    <div class="cf-type-toggle">
+                        <button class="cf-type active" data-val="Hero">Hero</button>
+                        <button class="cf-type" data-val="Villain">Villain</button>
+                    </div>
+                </div>
+                <div class="cf-grid">
+                    <div class="cf-field">
+                        <label class="cf-label">PWR</label>
+                        <input type="number" id="cf-pwr" class="cf-input" placeholder="0–100" min="0" max="100" />
+                    </div>
+                    <div class="cf-field">
+                        <label class="cf-label">SPD</label>
+                        <input type="number" id="cf-spd" class="cf-input" placeholder="0–100" min="0" max="100" />
+                    </div>
+                    <div class="cf-field">
+                        <label class="cf-label">DEF</label>
+                        <input type="number" id="cf-def" class="cf-input" placeholder="0–100" min="0" max="100" />
+                    </div>
+                    <div class="cf-field">
+                        <label class="cf-label">INT</label>
+                        <input type="number" id="cf-int" class="cf-input" placeholder="0–100" min="0" max="100" />
+                    </div>
+                </div>
+                <div class="cf-field">
+                    <label class="cf-label">Personality</label>
+                    <input type="text" id="cf-personality" class="cf-input" placeholder="e.g. Protective…" />
+                </div>
+                <div class="cf-field">
+                    <label class="cf-label">Hometown</label>
+                    <input type="text" id="cf-hometown" class="cf-input" placeholder="City…" />
+                </div>
+                <div class="cf-field">
+                    <label class="cf-label">Weakness</label>
+                    <input type="text" id="cf-weakness" class="cf-input" placeholder="e.g. Magic vulnerable…" />
+                </div>
+                <button id="cf-generate-btn" class="btn-edit cf-gen-btn">Generate Prompt &#10148;</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Sidebar Section -->
+    <aside id="sidebar" class="sidebar">
+        <div class="sidebar-content">
+            <h2 class="history-title">History</h2>
+            <ul id="history-list">
+                <li class="history-placeholder"><em>No prompts yet...</em></li>
+            </ul>
+        </div>
+        <div class="sidebar-footer">
+            <button id="settings-btn" class="icon-btn gear-btn" aria-label="Settings">&#9881;</button>
+        </div>
+    </aside>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="close-modal" class="icon-btn close-modal-btn">&times;</button>
+            <h3>Settings</h3>
+            
+            <div class="setting-option">
+                <label>Theme:</label>
+                <div class="toggle-group">
+                    <button class="theme-toggle active" data-theme="light">Light</button>
+                    <button class="theme-toggle" data-theme="dark">Dark</button>
+                </div>
+            </div>
+            
+            <div class="setting-option">
+                <label>Text Size:</label>
+                <select id="text-size-select">
+                    <option value="small">Small</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="large">Large</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- New Session Header with Buttons and Timestamp -->
+        <div class="session-header">
+            <div class="session-controls">
+                <button id="char-panel-btn" class="session-btn">&#9889; Library</button>
+                <button id="new-session-btn" class="session-btn">New Session</button>
+                <button id="current-session-btn" class="session-btn">Current Session</button>
+                <button id="regenerate-btn" class="session-btn regen-btn" style="display:none;">&#8635; Regenerate</button>
+            </div>
+            <div id="timestamp-display"></div>
+        </div>
+        <div id="spiderman-hanging" class="spiderman-container">
+             <img src="Blackspider.png" class="Blackspidey" alt="Black Spiderman">
+             <img src="RedSpider.png" class="Redspidey" alt="Red Spider">
+        </div>
+
+        
+        <div id = "hero-area" class="hero-wrapper">
+            <h1 id="hero-title" class="hero-text"><span>Unleash</span><span>The Hero</span><span>In You</span> </h1>
+        </div>
+        <!-- Result/Output Area (Center) -->
+        <div id="result-display"></div>
+
+        <!-- Variants Picker (shown when "Generate 3 variants" is checked) -->
+        <div id="variants-picker" style="display:none;" class="variants-picker-wrapper">
+            <p class="variants-title">Choose your favorite variant</p>
+            <div id="variants-grid" class="variants-grid"></div>
+            <button id="use-variant-btn" class="btn-use-variant" disabled>Use This Image &#8594;</button>
+        </div>
+
+        <!-- Edit Section (shown after generation) -->
+        <div id="edit-section" style="display:none;" class="edit-section-wrapper">
+            <div class="edit-section-header">
+                <span class="edit-title">Modify Image</span>
+                <span class="edit-badge">Inpainting</span>
+            </div>
+
+            <!-- Mode Toggle -->
+            <div class="mode-toggle">
+                <button class="mode-btn active" id="mode-edit-btn">&#9998; Edit</button>
+                <button class="mode-btn" id="mode-text-btn">T&nbsp; Add Text</button>
+                <button class="mode-btn" id="mode-card-btn">&#9830; Card</button>
+            </div>
+
+            <!-- Add Text Panel -->
+            <div id="addtext-panel" style="display:none;" class="addtext-panel">
+                <div class="at-field">
+                    <span class="at-label">Text to add</span>
+                    <input type="text" id="at-text" placeholder='e.g. "HERO MODE ON"' />
+                </div>
+                <div class="at-options">
+                    <div class="at-group">
+                        <span class="at-label">Style</span>
+                        <div class="at-btn-group">
+                            <button class="at-opt active" data-key="style" data-val="bold">Bold</button>
+                            <button class="at-opt" data-key="style" data-val="italic">Italic</button>
+                            <button class="at-opt" data-key="style" data-val="regular">Regular</button>
+                        </div>
+                    </div>
+                    <div class="at-group">
+                        <span class="at-label">Size</span>
+                        <div class="at-btn-group">
+                            <button class="at-opt" data-key="size" data-val="small">S</button>
+                            <button class="at-opt active" data-key="size" data-val="medium">M</button>
+                            <button class="at-opt" data-key="size" data-val="large">L</button>
+                        </div>
+                    </div>
+                    <div class="at-group">
+                        <span class="at-label">Color</span>
+                        <div class="at-btn-group at-colors">
+                            <button class="at-opt at-color active" data-key="color" data-val="white" style="background:#fff;border:2px solid #ccc;" title="White"></button>
+                            <button class="at-opt at-color" data-key="color" data-val="black" style="background:#111;" title="Black"></button>
+                            <button class="at-opt at-color" data-key="color" data-val="red" style="background:#e53e3e;" title="Red"></button>
+                            <button class="at-opt at-color" data-key="color" data-val="yellow" style="background:#ecc94b;" title="Yellow"></button>
+                            <button class="at-opt at-color" data-key="color" data-val="blue" style="background:#4299e1;" title="Blue"></button>
+                        </div>
+                    </div>
+                    <div class="at-group">
+                        <span class="at-label">Effect</span>
+                        <div class="at-btn-group">
+                            <button class="at-opt active" data-key="effect" data-val="shadow">Shadow</button>
+                            <button class="at-opt" data-key="effect" data-val="outline">Outline</button>
+                            <button class="at-opt" data-key="effect" data-val="glow">Glow</button>
+                            <button class="at-opt" data-key="effect" data-val="none">None</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="at-preview" id="at-preview">Select a region on the image, then fill in the options above.</div>
+                <button class="btn-edit" id="at-apply-btn" disabled>Apply Text</button>
+            </div>
+
+            <p class="canvas-hint" id="canvas-hint">Draw a rectangle on the image to select the area you want to change</p>
+            <div class="canvas-wrap" id="canvas-wrap">
+                <canvas id="edit-canvas"></canvas>
+            </div>
+            <div class="selection-info" id="selection-info"></div>
+
+            <!-- Card Mode Panel -->
+            <div id="card-panel" style="display:none;" class="card-panel">
+                <div class="cp-row cp-2col">
+                    <div class="cp-field">
+                        <label class="cp-label">Name</label>
+                        <input type="text" id="card-name" class="cp-input" placeholder="Character name…" />
+                    </div>
+                    <div class="cp-field">
+                        <label class="cp-label">Type</label>
+                        <div class="cp-type-toggle">
+                            <button class="cp-type active" data-val="Hero">Hero</button>
+                            <button class="cp-type" data-val="Villain">Villain</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="cp-field">
+                    <label class="cp-label">Stats <span class="cp-sublabel">(fill up to 6)</span></label>
+                    <div class="cp-stats-grid" id="card-stats-grid">
+                        <div class="cs-row"><input class="cp-input cs-key" placeholder="PWR" /><input class="cp-input cs-val" placeholder="0" /></div>
+                        <div class="cs-row"><input class="cp-input cs-key" placeholder="SPD" /><input class="cp-input cs-val" placeholder="0" /></div>
+                        <div class="cs-row"><input class="cp-input cs-key" placeholder="DEF" /><input class="cp-input cs-val" placeholder="0" /></div>
+                        <div class="cs-row"><input class="cp-input cs-key" placeholder="INT" /><input class="cp-input cs-val" placeholder="0" /></div>
+                        <div class="cs-row"><input class="cp-input cs-key" placeholder="EVIL" /><input class="cp-input cs-val" placeholder="0" /></div>
+                        <div class="cs-row"><input class="cp-input cs-key" placeholder="AGE" /><input class="cp-input cs-val" placeholder="0" /></div>
+                    </div>
+                </div>
+                <div class="cp-row cp-2col">
+                    <div class="cp-field">
+                        <label class="cp-label">Personality</label>
+                        <input type="text" id="card-personality" class="cp-input" placeholder="e.g. Protective" />
+                    </div>
+                    <div class="cp-field">
+                        <label class="cp-label">Hometown</label>
+                        <input type="text" id="card-hometown" class="cp-input" placeholder="City…" />
+                    </div>
+                </div>
+                <div class="cp-field">
+                    <label class="cp-label">Weakness</label>
+                    <input type="text" id="card-weakness" class="cp-input" placeholder="e.g. Magic vulnerable…" />
+                </div>
+                <div class="cp-actions">
+                    <button id="render-card-btn" class="btn-edit">Render Card</button>
+                    <button id="reset-card-btn" class="btn-clear">Reset</button>
+                    <button id="save-card-btn" class="btn-nav" style="display:none;">&#8595; Save Card</button>
+                </div>
+            </div>
+
+            <!-- Edit Mode controls -->
+            <div id="edit-controls">
+                <div class="edit-row">
+                    <input type="text" id="edit-prompt" placeholder='Describe what to change — e.g. "a golden mask"' />
+                    <button class="btn-edit" id="edit-btn" disabled>Apply</button>
+                </div>
+            </div>
+
+            <div class="edit-actions">
+                <button class="btn-clear" id="clear-selection-btn">Clear Selection</button>
+                <button class="btn-nav" id="undo-btn" disabled>&#8592; Back</button>
+                <button class="btn-nav" id="redo-btn" disabled>Forward &#8594;</button>
+            </div>
+            <div id="version-history" class="version-history" style="display:none;">
+                <div class="version-label">Version History</div>
+                <div class="version-strip" id="version-strip"></div>
+            </div>
+            <div class="edit-loader" id="edit-loader">
+                <div class="spinner"></div>
+                <p>Applying edit…</p>
+            </div>
+            <div class="edit-error" id="edit-error"></div>
+        </div>
+
+        <!-- Caption Box (shown after generation) -->
+        <div id="caption-box" style="display:none;" class="caption-box-wrapper">
+            <div class="caption-label">Suggested Caption</div>
+            <p class="caption-text" id="caption-text"></p>
+            <button class="copy-btn" id="copy-btn">Copy Caption</button>
+        </div>
+
+        <!-- Input Section (Bottom) -->
+        <div class="input-container">
+            <!-- Image Previews appear here -->
+            <div id="preview-gallery" style="display: none;"></div>
+
+            <div class="input-row">
+                <button id="add-btn" class="round-btn secondary" title="Add Images">&#43;</button>
+                <input type="file" id="file-upload" style="display: none;" accept="image/*" multiple>
+
+                <textarea id="prompt-input" rows="1" placeholder="Type the characteristics of the superhero to generate image..."></textarea>
+
+                <button id="submit-btn" class="round-btn primary" title="Send Prompt">&#10148;</button>
+            </div>
+            <div class="variants-row">
+                <label class="variants-label">
+                    <input type="checkbox" id="variants-check">
+                    <span>Generate 3 variants</span>
+                </label>
+            </div>
+        </div>
+    </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="logic4.js"></script>
+</body>
+</html>
