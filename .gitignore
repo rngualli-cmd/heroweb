@@ -2,12 +2,12 @@
 .env
 
 # Python virtual environment
+venv/
+.venv/
 googleengine/Lib/
 googleengine/Scripts/
 googleengine/Include/
 googleengine/pyvenv.cfg
-venv/
-.venv/
 
 # Python cache
 __pycache__/

@@ -11,24 +11,7 @@ git clone https://github.com/rngualli-cmd/heroweb.git
 cd heroweb
 ```
 
-### 2. Create a virtual environment
-
-```bash
-python -m venv venv
-```
-
-Activate it:
-
-- **Windows:** `venv\Scripts\activate`
-- **Mac/Linux:** `source venv/bin/activate`
-
-### 3. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Set up your API key
+### 2. Set up your API key
 
 Create a `.env` file in the project root:
 
@@ -38,9 +21,30 @@ OPENROUTER_API_KEY=your-openrouter-api-key-here
 
 Get a key at [openrouter.ai](https://openrouter.ai/).
 
-### 5. Run the server
+### 3. Install & Run
+
+**Windows** — double-click or run from terminal:
+
+```
+install.bat        # Creates venv + installs dependencies
+start.bat          # Starts server + opens browser
+```
+
+**Mac / Linux:**
 
 ```bash
+chmod +x install.sh start.sh
+./install.sh       # Creates venv + installs dependencies
+./start.sh         # Starts server + opens browser
+```
+
+### Manual setup (alternative)
+
+```bash
+python -m venv venv
+# Windows: venv\Scripts\activate
+# Mac/Linux: source venv/bin/activate
+pip install -r requirements.txt
 cd googleengine
 python server.py
 ```
